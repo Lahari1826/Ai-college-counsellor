@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './App.css';
 
+const API_URL = "https://ai-college-counsellor.onrender.com";
+
 function App() {
   const [step, setStep] = useState('profile');
   const [gpa, setGpa] = useState('');
@@ -23,7 +25,7 @@ function App() {
 
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:5000/api/register', {
+      const response = await fetch(`${API_URL}/api/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -46,7 +48,7 @@ function App() {
       }]);
     } catch (error) {
       console.error('submitProfile error:', error);
-      alert('Backend not running! Start: cd backend && npm run dev');
+      alert('Backend not reachable!');
     }
     setLoading(false);
   };
@@ -57,11 +59,12 @@ function App() {
     const userMsg = { id: Date.now(), text: inputMessage, isAI: false };
     setMessages(prev => [...prev, userMsg]);
     setLoading(true);
+
     const messageToSend = inputMessage;
     setInputMessage('');
 
     try {
-      const response = await fetch('http://localhost:5000/api/chat', {
+      const response = await fetch(`${API_URL}/api/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -73,6 +76,7 @@ function App() {
       });
 
       const data = await response.json();
+
       setMessages(prev => [...prev, {
         id: Date.now() + 1,
         text: data.message,
@@ -82,17 +86,20 @@ function App() {
       console.error('sendMessage error:', error);
       setMessages(prev => [...prev, {
         id: Date.now() + 1,
-        text: 'Backend error! Is server running?',
+        text: 'Backend error! Try again.',
         isAI: true
       }]);
     }
+
     setLoading(false);
   };
 
+  // PROFILE SCREEN
   if (step === 'profile') {
     return (
       <div className="container">
         <h1>🎓 AI College Counselor</h1>
+
         <input
           type="number"
           step="0.1"
@@ -100,24 +107,34 @@ function App() {
           value={gpa}
           onChange={e => setGpa(e.target.value)}
         />
+
         <input
           placeholder="Interests (CS, AI)"
           value={interests}
           onChange={e => setInterests(e.target.value)}
         />
+
         <button onClick={submitProfile} disabled={loading}>
           {loading ? 'Saving...' : '🚀 Start AI Chat'}
         </button>
-        <div>Backend: <span style={{color: 'green'}}>localhost:5000</span></div>
+
+        <div>
+          Backend: <span style={{ color: 'green' }}>Live Server</span>
+        </div>
       </div>
     );
   }
 
+  // CHAT SCREEN
   return (
     <div className="container">
       <h2>🤖 AI College Counselor</h2>
+
       <p>GPA: {gpa} | Interests: {interests}</p>
-      <button onClick={() => setStep('profile')}>← Edit Profile</button>
+
+      <button onClick={() => setStep('profile')}>
+        ← Edit Profile
+      </button>
 
       <div className="chatbox">
         {messages.map(msg => (
@@ -125,6 +142,7 @@ function App() {
             {msg.text}
           </div>
         ))}
+
         {loading && <div className="ai">AI typing...</div>}
         <div ref={messagesEndRef} />
       </div>
@@ -136,6 +154,7 @@ function App() {
           onKeyPress={e => e.key === 'Enter' && sendMessage()}
           placeholder="Ask about colleges..."
         />
+
         <button onClick={sendMessage}>Send</button>
       </div>
     </div>
